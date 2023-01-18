@@ -2,6 +2,7 @@
 var inquirer = require('inquirer');
 const fs = require('fs');
 const { listenerCount } = require('process');
+const { resolve } = require('path');
 
 // TODO: Create an array of questions for user input
 const questions = [
@@ -16,12 +17,6 @@ const questions = [
         name: 'title',
         message: 'Title Of The README',
         default: 'Title'
-    },
-    {
-        type: 'input',
-        name: 'number_of_sections',
-        message: 'Number Of Sections',
-        default: '1'
     }
 ];
 
@@ -32,17 +27,37 @@ function writeToFile(fileName, data) {
 // TODO: Create a function to initialize app
 async function init() {
     console.log('Initializing...')
-    const InnitAnswers = await InquirerInnit()
-    console.log(InnitAnswers)
-    console.log('I Waited Forever Jeezus')
+    const InnitData = await InnitInquire()
+    const Sections = await InnitSections()
+    console.log([InnitData, Sections])
 }
 
-function InquirerInnit() {
+function InnitInquire() {
+    return new Promise(resolve => {
+        inquirer
+            .prompt(questions)
+            .then((answers) => {
+                resolve(answers)
+                // fs.writeFile(`./${answers.file_name}.md`, `# ${answers.title}`, err => {
+                //     if (err) {
+                //         console.error(err)
+                //     }
+                // })
+            })
+    })
+}
+
+function InnitSections() {
     return new Promise(resolve => {
         let sections = []
         let sectionRecursionStart = 1
         inquirer
-            .prompt(questions)
+            .prompt({
+                type: 'input',
+                name: 'number_of_sections',
+                message: 'Number Of Sections',
+                default: '1'
+            })
             .then((innitAnswers) => {
                 function SectionSelection() {
                     inquirer
@@ -54,7 +69,7 @@ function InquirerInnit() {
                             choices: ['Bullet Points', 'Raw Text']
                         })
                         .then((answer) => {
-                            sections.push(answer)
+                            sections.push({section_number: sectionRecursionStart, ...answer})
                             if (sectionRecursionStart < innitAnswers.number_of_sections) {
                                 sectionRecursionStart++
                                 SectionSelection()
@@ -69,14 +84,6 @@ function InquirerInnit() {
 }
 
 function CreateREADME(data) {
-    let fileContetnt = `
-    # ${data.title}\n
-    ` 
-    fs.writeFile(`./${data.file_name}.md`, `# ${data.title}`, err => {
-        if (err) {
-            console.error(err)
-        }
-    })
 }
 
 // Function call to initialize app
