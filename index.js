@@ -21,7 +21,7 @@ const questions = [
         type: 'input',
         name: 'number_of_sections',
         message: 'Number Of Sections',
-        default: '0'
+        default: '1'
     }
 ];
 
@@ -30,41 +30,47 @@ function writeToFile(fileName, data) {
 }
 
 // TODO: Create a function to initialize app
-function init() {
-    InquirerInnit()
+async function init() {
+    console.log('Initializing...')
+    const InnitAnswers = await InquirerInnit()
+    console.log(InnitAnswers)
+    console.log('I Waited Forever Jeezus')
 }
 
 function InquirerInnit() {
-    inquirer
-        .prompt(questions)
-        .then((answers) => {
-            console.log(answers)
-            CreateREADME(answers)
-        })
+    return new Promise(resolve => {
+        let sections = []
+        let sectionRecursionStart = 1
+        inquirer
+            .prompt(questions)
+            .then((innitAnswers) => {
+                function SectionSelection() {
+                    inquirer
+                        .prompt({
+                            type: 'list',
+                            name: 'section_type',
+                            message: `What Is Section ${sectionRecursionStart}`,
+                            default: 'Raw Text',
+                            choices: ['Bullet Points', 'Raw Text']
+                        })
+                        .then((answer) => {
+                            sections.push(answer)
+                            if (sectionRecursionStart < innitAnswers.number_of_sections) {
+                                sectionRecursionStart++
+                                SectionSelection()
+                            } else {
+                                resolve(sections)
+                            }
+                        })
+                }
+                SectionSelection()
+            })
+    })
 }
 
 function CreateREADME(data) {
-    let sectionRecursion = 1
-    const SectionSelection = () => {
-        inquirer
-            .prompt({
-                type: 'list',
-                name: 'section_type',
-                message: `What Is Section ${sectionRecursion}`,
-                default: 'text',
-                choices: ['Bullet Points', 'Raw Text']
-            })
-            .then((answers) => {
-                console.log(answers)
-                if (sectionRecursion < data.number_of_sections) {
-                    sectionRecursion++
-                    SectionSelection()
-                }
-            })
-    }
-    SectionSelection()
     let fileContetnt = `
-        # ${data.title}\n
+    # ${data.title}\n
     ` 
     fs.writeFile(`./${data.file_name}.md`, `# ${data.title}`, err => {
         if (err) {
@@ -75,3 +81,34 @@ function CreateREADME(data) {
 
 // Function call to initialize app
 init();
+// const BulletCreation = (answer) => {
+//     if (answer.section_type === 'Bullet Points') {
+//         inquirer
+//             .prompt({
+//                 type: 'input',
+//                 name: 'amount_of_bullets',
+//                 message: `Amount Of Bullet Point(s) For Section ${sectionRecursion}`,
+//                 default: '0'
+//             })
+//             .then((amount) => {
+//                 let bulletPoints = []
+//                 let bulletPointRecursion = 1
+//                 const BulletPointGeneration = () => {
+//                     inquirer
+//                         .prompt({
+//                             type: 'input',
+//                             name: 'bullet',
+//                             message: `Bullet ${bulletPointRecursion}`,
+//                             default: 'NAN'
+//                         })
+//                         .then((bulletContent) => {
+//                             bulletPoints.push(bulletContent.bullet)
+//                         })
+//                 }
+//                 if (bulletPointRecursion < amount.amount_of_bullets) {
+//                     bulletPointRecursion++
+//                     BulletPointGeneration()
+//                 }
+//             })
+//     }
+// }
