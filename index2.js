@@ -2,11 +2,11 @@
 var inquirer = require('inquirer');
 const fs = require('fs');
 
-// Remaking because nothing works
-async function innit() {
-    const innitDataVar = await innitData() // initialize readme file with a title
-    const sections = await sectionCreation() // asks how many sections the user wants
-    for (let i = 0; i < sections.length; i++) {
+/* ----------------------------- INNIT FUNCTION ----------------------------- */
+async function init() {
+    const initDataVar = await initData() // initialize readme file with a title.
+    const sections = await sectionCreation() // asks how many sections the user wants.
+    for (let i = 0; i < sections.length; i++) { // ask questions according to each section.
         console.log(sections[i])
         await sectionDataCreation(sections[i])
         await sectionSubDataCreation(sections[i])
@@ -20,14 +20,15 @@ async function innit() {
             await sectionContentCreation(sections[i])
         }
     }
-    await innitDataGeneration(innitDataVar)
-    for (let i = 0; i < sections.length; i++) {
-        await sectionGeneration(innitDataVar, sections[i])  
+    await innitDataGeneration(initDataVar) // generate file and add title.
+    for (let i = 0; i < sections.length; i++) { // generate and append each section to the README file.
+        await sectionGeneration(initDataVar, sections[i])  
     }
-    console.log(`File Generated! (${innitDataVar.file_name}.md)`)
+    console.log(`File Generated! (${initDataVar.file_name}.md)`)
 }
 
-function innitData() {
+/* ----------------------------- QUERY FUNCTION ----------------------------- */
+function initData() { // asks user for title and their preffered file name.
     return new Promise(resolve => {
         let questions = [
             {
@@ -51,7 +52,7 @@ function innitData() {
     })
 }
 
-function sectionCreation() {
+function sectionCreation() { // asks user for the amount of sections they want.
     return new Promise(resolve => {
         let questions = [
             {
@@ -75,7 +76,7 @@ function sectionCreation() {
     })
 }
 
-function sectionDataCreation(section) {
+function sectionDataCreation(section) { // asks user for the title they want for each section.
     return new Promise(resolve => {
         let questions = [
             {
@@ -93,7 +94,7 @@ function sectionDataCreation(section) {
     })
 }
 
-function sectionSubDataCreation(section) {
+function sectionSubDataCreation(section) { // asks user if their section is bullets or raw text and if it is bullets then it asks how many bullets.
     return new Promise(resolve => {
         let question1 = {
             type: 'list',
@@ -124,7 +125,7 @@ function sectionSubDataCreation(section) {
     })
 }
 
-function sectionContentCreation(section, i) {
+function sectionContentCreation(section, i) { // asks user for the content that they want in each bullet or in a raw text section.
     return new Promise(resolve => {
         let questions = [
             {
@@ -157,7 +158,8 @@ function sectionContentCreation(section, i) {
     })
 }
 
-function innitDataGeneration(innit) {
+/* -------------------------- GENERATION FUNCTIONS -------------------------- */
+function innitDataGeneration(innit) { // generates the readme file and add the title to the top of the file.
     return new Promise(resolve => {
         let fileContent = `# ${innit.title}\n`
         fs.writeFile(`./${innit.file_name}.md`, fileContent, err => {
@@ -169,7 +171,7 @@ function innitDataGeneration(innit) {
     })
 }
 
-function sectionGeneration(innit, section) {
+function sectionGeneration(innit, section) { // generates each section according to the section type and amount of bullets etc.
     return new Promise(resolve => {
         if (section.section_type === 'Bullets') {
             let sectionContent = `## ${section.section_title}\n`
@@ -177,26 +179,30 @@ function sectionGeneration(innit, section) {
                 if (err) {
                     console.error(err);
                 }
+                bulletGen()
             })
-            for (let i2 = 0; i2 < section.content.length; i2++) {
-                let bulletContent = ` - ${section.content[i2]}\n`
-                fs.appendFile(`./${innit.file_name}.md`, bulletContent, err => {
-                    if (err) {
-                        console.error(err);
-                    }
-                })
+            function bulletGen() {
+                for (let i2 = 0; i2 < section.content.length; i2++) {
+                    let bulletContent = ` - ${section.content[i2]}\n`
+                    fs.appendFile(`./${innit.file_name}.md`, bulletContent, err => {
+                        if (err) {
+                            console.error(err);
+                        }
+                        resolve()
+                    })
+                }
             }
-            resolve()
         } else {
             let sectionContent = `## ${section.section_title}\n${section.content}\n`
             fs.appendFile(`./${innit.file_name}.md`, sectionContent, err => {
                 if (err) {
                     console.error(err);
                 }
+                resolve()
             })
-            resolve()
         }
     })
 }
 
-innit()
+/* ----------------------------- INITIALIZE APP ----------------------------- */
+init()
