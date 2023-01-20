@@ -26,7 +26,7 @@ async function innit() {
         }
     }
 
-    // const FinalGeneration = 
+    const README = finalGeneration(innitDataVar, sections)
     console.log(sections)
 }
 
@@ -156,6 +156,49 @@ function sectionContentCreation(section) {
                     resolve(section.content = answer.raw_text_content)
                 })
 
+        }
+    })
+}
+
+function finalGeneration(innit, sections) {
+    return new Promise(resolve => {
+        let fileContent = `
+            # ${innit.title}\n
+        `
+        fs.writeFile(`./${innit.file_name}.md`, fileContent, err => {
+            if (err) {
+                console.error(err);
+            }
+        })
+        for (let i = 0; i < sections.length; i++) {
+            if (sections[i].section_type === 'Bullets') {
+                let sectionContent = `
+                    ## ${sections[i].section_title}\n
+                `
+                fs.appendFile(`./${innit.file_name}.md`, sectionContent, err => {
+                    if (err) {
+                        console.error(err);
+                    }
+                })
+                for (let i2 = 0; i2 < sections.content.length; i2++) {
+                    let bulletContent = sections.content[i]
+                    fs.appendFile(`./${innit.file_name}.md`, bulletContent, err => {
+                        if (err) {
+                            console.error(err);
+                        }
+                    })
+                }
+            } else {
+                let sectionContent = `
+                    ## ${sections[i].section_title}
+                    ${sections[i].content}
+                `
+                fs.appendFile(`./${innit.file_name}.md`, sectionContent, err => {
+                    if (err) {
+                        console.error(err);
+                    }
+                })
+            }
         }
     })
 }
