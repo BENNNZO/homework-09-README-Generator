@@ -1,181 +1,206 @@
-// TODO: Include packages needed for this application
+/* -------------------------------- LIBRARIES ------------------------------- */
 var inquirer = require('inquirer');
 const fs = require('fs');
-const { listenerCount } = require('process');
-const { resolve } = require('path');
 
-// TODO: Create an array of questions for user input
-const questions = [
-    {
-        type: 'input',
-        name: 'file_name',
-        message: 'File Name (auto adds .md to the end)',
-        default: 'README'
-    },
-    {
-        type: 'input',
-        name: 'title',
-        message: 'Title Of The README',
-        default: 'Title'
-    }
-];
-
-// TODO: Create a function to write README file
-function writeToFile(fileName, data) {
-}
-
-// TODO: Create a function to initialize app
+/* ----------------------------- INNIT FUNCTION ----------------------------- */
 async function init() {
-    console.log('Initializing...')
-    const InnitData = await InnitInquire()
-    const Sections = await InnitSections()
-    const SectionContents = await sectionContentPrompt(Sections)
-    console.log([InnitData, Sections])
-    console.log('innit function')
+    const initDataVar = await initData() // initialize readme file with a title.
+    const sections = await sectionCreation() // asks how many sections the user wants.
+    for (let i = 0; i < sections.length; i++) { // ask questions according to each section.
+        await sectionDataCreation(sections[i])
+        await sectionSubDataCreation(sections[i])
+        if (sections[i].section_type === 'Bullets') {
+            sections[i].content = []
+            for (let i2 = 0; i2 < sections[i].amount_of_bullets; i2++) {
+                await sectionContentCreation(sections[i], i2)
+            }
+        } else {
+            await sectionContentCreation(sections[i])
+        }
+    }
+    await innitDataGeneration(initDataVar) // generate file and add title.
+    for (let i = 0; i < sections.length; i++) { // generate and append each section to the README file.
+        await sectionGeneration(initDataVar, sections[i])  
+    }
+    console.log(`File Generated! (${initDataVar.file_name}.md)`)
 }
 
-function InnitInquire() {
+/* ----------------------------- QUERY FUNCTION ----------------------------- */
+function initData() { // asks user for title and their preffered file name.
     return new Promise(resolve => {
+        let questions = [
+            {
+                type: 'input',
+                name: 'file_name',
+                message: 'What do you want the file name to be? (auto adds .md to the end)',
+                default: 'README'
+            },
+            {
+                type: 'input',
+                name: 'title',
+                message: 'Title of your README:',
+                default: 'Title'
+            }
+        ]
         inquirer
             .prompt(questions)
-            .then((answers) => {
+            .then(answers => {
                 resolve(answers)
-                // fs.writeFile(`./${answers.file_name}.md`, `# ${answers.title}`, err => {
-                //     if (err) {
-                //         console.error(err)
-                //     }
-                // })
             })
     })
 }
 
-function InnitSections() {
+function sectionCreation() { // asks user for the amount of sections they want.
     return new Promise(resolve => {
-        let sections = []
-        let sectionRecursionStart = 1
-        inquirer
-            .prompt({
-                type: 'input',
-                name: 'number_of_sections',
-                message: 'Number Of Sections',
-                default: '1'
-            })
-            .then((innitAnswers) => {
-                function SectionSelection() {
-                    inquirer
-                        .prompt({
-                            type: 'list',
-                            name: 'section_type',
-                            message: `What Is Section ${sectionRecursionStart}`,
-                            default: 'Raw Text',
-                            choices: ['Bullet Points', 'Raw Text']
-                        })
-                        .then((answer) => {
-                            sections.push({section_number: sectionRecursionStart, ...answer})
-                            if (sectionRecursionStart < innitAnswers.number_of_sections) {
-                                sectionRecursionStart++
-                                SectionSelection()
-                            } else {
-                                resolve(sections)
-                            }
-                        })
-                }
-                SectionSelection()
-            })
-    })
-}
-
-function sectionContentPrompt(sectionData) {
-    return new Promise(resolve => {
-        let sectionDataRecursion = 0
-        console.log(sectionData[sectionDataRecursion])
-        const sectionDataForEach = async (e) => {
-            if (e[sectionDataRecursion].section_type === 'Bullet Points') {
-                function BulletPoints() {
-                    return new Promise((resolve) => {
-                        console.log(e[sectionDataRecursion].section_type)
-                        console.log('asdasdasdasdasd')
-                        inquirer
-                            .prompt({
-                                type: 'input',
-                                name: 'amount_of_bullets',
-                                message: `How Many Bullet Points For Section ${sectionDataRecursion + 1}`,
-                                default: '1'
-                            })
-                            .then((response) => {
-                                let bullets = []
-                                let bulletPointsRecursion = 1
-                                const BulletPointContents = async () => {
-                                    function bulletPointsAsync() {
-                                        return new Promise((resolve) => {
-                                            inquirer
-                                                .prompt({
-                                                    type: 'input',
-                                                    name: 'section_content',
-                                                    message: `Bullet ${bulletPointsRecursion}`,
-                                                    default: ''
-                                                })
-                                                .then((content) => {
-                                                    bullets.push(content.section_content)
-                                                    sectionData[sectionDataRecursion] = Object.assign(sectionData[sectionDataRecursion], {bullets: bullets})
-                                                    console.log(sectionData)
-                                                    if (bulletPointsRecursion < response.amount_of_bullets) {
-                                                        bulletPointsRecursion++
-                                                        BulletPointContents()
-                                                    } else {
-                                                        resolve()
-                                                    }
-                                                })
-                                        })
-                                    }
-                                    await bulletPointsAsync()
-                                }
-                                BulletPointContents()
-                                if (sectionDataRecursion + 1 < e.length) {
-                                    sectionDataRecursion++
-                                    sectionDataForEach(sectionData)
-                                } else {
-                                    resolvePromise(sectionData)
-                                }
-                            })
-                    })
-                }
-                await BulletPoints()
-            } else {
-                function RawText() {
-                    return new Promise((resolve) => {
-                        inquirer
-                            .prompt({
-                                type: 'input',
-                                name: 'section_content',
-                                message: 'Type Out Section Content',
-                                default: ''
-                            })
-                            .then((content) => {
-                                sectionData[sectionDataRecursion] = Object.assign(sectionData[sectionDataRecursion], content)
-                                if (sectionDataRecursion + 1 < e.length) {
-                                    console.log('if true')
-                                    console.log(e.length)
-                                    sectionDataRecursion++
-                                    sectionDataForEach(sectionData)
-                                } else {
-                                    console.log(sectionDataRecursion)
-                                    console.log(sectionData.length)
-                                    console.log('else')
-                                    resolvePromise(sectionData)
-                                }
-                            })
-                    })
-                }
-                await RawText()
+        let questions = [
+            {
+                type: 'number',
+                name: 'amount_of_sections',
+                message: 'How Many Secions Do You Want?',
+                default: 0
             }
+        ]
+        inquirer
+            .prompt(questions)
+            .then(answer => {
+                let sections = []
+                for (let i = 0; i < answer.amount_of_sections; i++) {
+                    sections.push({
+                        id: i
+                    })
+                }
+                resolve(sections)
+            })
+    })
+}
+
+function sectionDataCreation(section) { // asks user for the title they want for each section.
+    return new Promise(resolve => {
+        let questions = [
+            {
+                type: 'input',
+                name: 'section_title',
+                message: `Title of section ${section.id + 1}`,
+                default: 'Sections Title'
+            }
+        ]
+        inquirer
+            .prompt(questions)
+            .then(answer => {
+                resolve(section.section_title = answer.section_title)
+            })
+    })
+}
+
+function sectionSubDataCreation(section) { // asks user if their section is bullets or raw text and if it is bullets then it asks how many bullets.
+    return new Promise(resolve => {
+        let question1 = {
+            type: 'list',
+            name: 'section_type',
+            message: `What type is section ${section.id + 1}?`,
+            choices: ['Bullets', 'Raw Text']
         }
-        sectionDataForEach(sectionData)
-        function resolvePromise() {
-            resolve(sectionData)
+        inquirer
+            .prompt(question1)
+            .then(answer1 => {
+                section.section_type = answer1.section_type
+                if (answer1.section_type === 'Bullets') {
+                    let question2 = {
+                        type: 'number',
+                        name: 'amount_of_bullets',
+                        message: 'How many bullet points do you need?',
+                        default: 0
+                    }
+                    inquirer
+                        .prompt(question2)
+                        .then(answer2 => {
+                            resolve(section.amount_of_bullets = answer2.amount_of_bullets)
+                        })
+                } else {
+                    resolve()
+                }
+            })
+    })
+}
+
+function sectionContentCreation(section, i) { // asks user for the content that they want in each bullet or in a raw text section.
+    return new Promise(resolve => {
+        let questions = [
+            {
+                type: 'input',
+                name: `bullet_content`,
+                message: `Bullet No.${i + 1}`,
+                default: 'NAN'
+            },
+            {
+                type: 'input',
+                name: 'raw_text_content',
+                message: `What text do you want for section ${section.id + 1}`,
+                default: 'NAN'
+            }
+        ]
+        if (section.section_type === 'Bullets') {
+            inquirer
+                .prompt(questions[0])
+                .then(answer => {
+                    resolve(section.content.push(answer.bullet_content))
+                })
+        } else {
+            inquirer
+                .prompt(questions[1])
+                .then(answer => {
+                    resolve(section.content = answer.raw_text_content)
+                })
+
         }
     })
 }
 
-// Function call to initialize app
-init();
+/* -------------------------- GENERATION FUNCTIONS -------------------------- */
+function innitDataGeneration(innit) { // generates the readme file and add the title to the top of the file.
+    return new Promise(resolve => {
+        let fileContent = `# ${innit.title}\n`
+        fs.writeFile(`./${innit.file_name}.md`, fileContent, err => {
+            if (err) {
+                console.error(err);
+            }
+        })
+        resolve()
+    })
+}
+
+function sectionGeneration(innit, section) { // generates each section according to the section type and amount of bullets etc.
+    return new Promise(resolve => {
+        if (section.section_type === 'Bullets') {
+            let sectionContent = `## ${section.section_title}\n`
+            fs.appendFile(`./${innit.file_name}.md`, sectionContent, err => {
+                if (err) {
+                    console.error(err);
+                }
+                bulletGen()
+            })
+            function bulletGen() {
+                for (let i2 = 0; i2 < section.content.length; i2++) {
+                    let bulletContent = ` - ${section.content[i2]}\n`
+                    fs.appendFile(`./${innit.file_name}.md`, bulletContent, err => {
+                        if (err) {
+                            console.error(err);
+                        }
+                        resolve()
+                    })
+                }
+            }
+        } else {
+            let sectionContent = `## ${section.section_title}\n${section.content}\n`
+            fs.appendFile(`./${innit.file_name}.md`, sectionContent, err => {
+                if (err) {
+                    console.error(err);
+                }
+                resolve()
+            })
+        }
+    })
+}
+
+/* ----------------------------- INITIALIZE APP ----------------------------- */
+init()
