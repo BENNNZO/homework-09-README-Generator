@@ -4,13 +4,8 @@ const fs = require('fs');
 
 // Remaking because nothing works
 async function innit() {
-    console.log('initializing')
     const innitDataVar = await innitData() // initialize readme file with a title
-    console.log(innitDataVar)
-
     const sections = await sectionCreation() // asks how many sections the user wants
-    console.log(sections)
-
     for (let i = 0; i < sections.length; i++) {
         console.log(sections[i])
         await sectionDataCreation(sections[i])
@@ -19,15 +14,17 @@ async function innit() {
             sections[i].content = []
             console.log(sections[i])
             for (let i2 = 0; i2 < sections[i].amount_of_bullets; i2++) {
-                await sectionContentCreation(sections[i])
+                await sectionContentCreation(sections[i], i2)
             }
         } else {
             await sectionContentCreation(sections[i])
         }
     }
-
-    const README = finalGeneration(innitDataVar, sections)
-    console.log(sections)
+    await innitDataGeneration(innitDataVar)
+    for (let i = 0; i < sections.length; i++) {
+        await sectionGeneration(innitDataVar, sections[i])  
+    }
+    console.log(`File Generated! (${innitDataVar.file_name}.md)`)
 }
 
 function innitData() {
@@ -127,13 +124,13 @@ function sectionSubDataCreation(section) {
     })
 }
 
-function sectionContentCreation(section) {
+function sectionContentCreation(section, i) {
     return new Promise(resolve => {
         let questions = [
             {
                 type: 'input',
                 name: `bullet_content`,
-                message: `Bullet No.${selector + 1}`,
+                message: `Bullet No.${i + 1}`,
                 default: 'NAN'
             },
             {
@@ -160,45 +157,44 @@ function sectionContentCreation(section) {
     })
 }
 
-function finalGeneration(innit, sections) {
+function innitDataGeneration(innit) {
     return new Promise(resolve => {
-        let fileContent = `
-            # ${innit.title}\n
-        `
+        let fileContent = `# ${innit.title}\n`
         fs.writeFile(`./${innit.file_name}.md`, fileContent, err => {
             if (err) {
                 console.error(err);
             }
         })
-        for (let i = 0; i < sections.length; i++) {
-            if (sections[i].section_type === 'Bullets') {
-                let sectionContent = `
-                    ## ${sections[i].section_title}\n
-                `
-                fs.appendFile(`./${innit.file_name}.md`, sectionContent, err => {
-                    if (err) {
-                        console.error(err);
-                    }
-                })
-                for (let i2 = 0; i2 < sections.content.length; i2++) {
-                    let bulletContent = sections.content[i]
-                    fs.appendFile(`./${innit.file_name}.md`, bulletContent, err => {
-                        if (err) {
-                            console.error(err);
-                        }
-                    })
+        resolve()
+    })
+}
+
+function sectionGeneration(innit, section) {
+    return new Promise(resolve => {
+        if (section.section_type === 'Bullets') {
+            let sectionContent = `## ${section.section_title}\n`
+            fs.appendFile(`./${innit.file_name}.md`, sectionContent, err => {
+                if (err) {
+                    console.error(err);
                 }
-            } else {
-                let sectionContent = `
-                    ## ${sections[i].section_title}
-                    ${sections[i].content}
-                `
-                fs.appendFile(`./${innit.file_name}.md`, sectionContent, err => {
+            })
+            for (let i2 = 0; i2 < section.content.length; i2++) {
+                let bulletContent = ` - ${section.content[i2]}\n`
+                fs.appendFile(`./${innit.file_name}.md`, bulletContent, err => {
                     if (err) {
                         console.error(err);
                     }
                 })
             }
+            resolve()
+        } else {
+            let sectionContent = `## ${section.section_title}\n${section.content}\n`
+            fs.appendFile(`./${innit.file_name}.md`, sectionContent, err => {
+                if (err) {
+                    console.error(err);
+                }
+            })
+            resolve()
         }
     })
 }
