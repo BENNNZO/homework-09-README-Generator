@@ -18,15 +18,15 @@ async function innit() {
         if (sections[i].section_type === 'Bullets') {
             sections[i].content = []
             console.log(sections[i])
-            let idkwhythisneedstobeherebutitdoes = sections[i].amount_of_bullets
-            let ialsodontknowwhythisneedstobeherebutiguessillputitheresothecodeworks = sections[i]
             for (let i2 = 0; i2 < sections[i].amount_of_bullets; i2++) {
-                await sectionContentCreation(sections[i], i2)
+                await sectionContentCreation(sections[i])
             }
         } else {
-            await sectionContentCreation(sections[i], 'text')
+            await sectionContentCreation(sections[i])
         }
     }
+
+    // const FinalGeneration = 
     console.log(sections)
 }
 
@@ -127,7 +127,7 @@ function sectionSubDataCreation(section) {
     })
 }
 
-function sectionContentCreation(section, selector) {
+function sectionContentCreation(section) {
     return new Promise(resolve => {
         let questions = [
             {
@@ -159,32 +159,5 @@ function sectionContentCreation(section, selector) {
         }
     })
 }
-
-
-                // if (answer1.section_type = 'Bullets') {
-                //     let question2 = {
-                //         type: 'number',
-                //         name: 'amount_of_bullets',
-                //         message: 'How many bullet points do you need?',
-                //         default: 0
-                //     }
-                //     inquirer
-                //         .prompt(question2)
-                //         .then(answer2 => {
-                //             for (let i = 0; i < answer2.amount_of_bullets; i++) {
-                //                 let question3 = {
-                //                     type: 'input',
-                //                     name: `bullet_content`,
-                //                     message: `Bullet No.${i + 1}`,
-                //                     default: ''
-                //                 }
-                //                 inquirer
-                //                     .prompt(question3)
-                //                     .then(answer3 => {
-                //                         section.bullets = [answer3.bullet_content, ...section.bullets]
-                //                     })
-                //             }
-                //         })
-                // }
 
 innit()
